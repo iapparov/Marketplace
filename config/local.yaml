@@ -1,3 +1,7 @@
 env: local
 http_port: 8080
 db: "./storage/marketplace.db"
+JWT_ACCESS_SECRET: "1234567890abcdef1234567890abcdef"
+JWT_REFRESH_SECRET: "1234567890abcdef1234567890abcdef"
+JWT_EXP_ACCESS_TOKEN: 15 # minutes
+JWT_EXP_REFRESH_TOKEN: 24 # hours
