@@ -7,6 +7,10 @@ import (
 )
 
 
+type Storage struct{
+	db *sql.DB
+}
+
 func New(config config.Config) (*Storage, error){
 	db, err := sql.Open("sqlite3", config.Db)
 	if err != nil {
@@ -18,8 +22,18 @@ func New(config config.Config) (*Storage, error){
 		uuid TEXT NOT NULL,
 		login TEXT NOT NULL UNIQUE,
 		password TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS ads (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		uuid TEXT NOT NULL,
+		title TEXT NOT NULL,
+		description TEXT NOT NULL,
+		price REAL NOT NULL,
+		img TEXT NOT NULL,
+		user_uuid TEXT NOT NULL,
+		FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 	);`)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("prepare error DB:%w", err)
 	}		

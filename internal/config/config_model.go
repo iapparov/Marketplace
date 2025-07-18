@@ -1,10 +1,16 @@
 package config
 
-import (
-	"log"
-	"os"
-	"gopkg.in/yaml.v3"
-)
+
+type Ad struct {
+	MinLengthTitle       int    `yaml:"min_length_title" env-default:"3"`
+	MaxLengthTitle       int    `yaml:"max_length_title" env-default:"100"`
+	MinLengthDescription int    `yaml:"min_length_description" env-default:"10"`
+	MaxLengthDescription int    `yaml:"max_length_description" env-default:"1000"`
+	ImgType              []string `yaml:"img_type" env-default:"jpg,jpeg,png"`
+	PriceMin             float64 `yaml:"price_min" env-default:"0.01"`
+
+	AllowedImgTypesMap map[string]bool `yaml:"-"`
+}
 
 type Username struct{
 	MinLength int `yaml:"min_length" env-default:"3"`
@@ -31,25 +37,5 @@ type Config struct {
 	JWT_EXP_REFRESH_TOKEN	int	`yaml:"JWT_EXP_REFRESH_TOKEN" env-default:"24"`
 	Username  Username `yaml:"username"`
 	Password  Password `yaml:"password"`
-}
-
-
-func MustLoad() *Config{
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == ""{
-		log.Fatalf("CONFIG_PATH env is required")
-	}
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		log.Fatalf("%s", "failed to read config file:" + err.Error())
-	}
-
-	var cfg Config
-
-	if err := yaml.Unmarshal(data, &cfg); err != nil{
-		log.Fatalf("%s", "failed to unmarshal config: " + err.Error())
-	}
-
-
-	return &cfg
+	Ad        Ad `yaml:"ad"`
 }

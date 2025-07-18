@@ -16,3 +16,14 @@ password:
     require_upper: true
     require_lower: true
     require_digit: true
+ad:
+    min_length_title: 3
+    max_length_title: 100
+    min_length_description: 10
+    max_length_description: 1000
+    img_type: 
+        - jpg
+        - jpeg
+        - png
+        - webm
+    price_min: 0.01

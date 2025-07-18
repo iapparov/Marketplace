@@ -15,7 +15,9 @@ type SignUpRequest struct {
 	Password string `json:"password"`
 }
 
-
+type UserService struct {
+	repo UserRepository
+}
 
 
 

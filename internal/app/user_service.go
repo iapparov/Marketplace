@@ -11,9 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	repo UserRepository;
-}
+
 
 func NewUserService(repo UserRepository) *UserService{
 	return &UserService{
@@ -60,7 +58,7 @@ func (s *UserService) RegisterUser(req SignUpRequest, config config.Config) (Use
 
 func isValidLogin(login string, config config.Config) (bool, error) {
 	if utf8.RuneCountInString(login) < config.Username.MinLength || utf8.RuneCountInString(login) > config.Username.MaxLength {
-		return false, errors.New(fmt.Sprintf("invalid login length . Must be between %d and %d characters", config.Username.MinLength, config.Username.MaxLength))
+		return false, fmt.Errorf("invalid login length . Must be between %d and %d characters", config.Username.MinLength, config.Username.MaxLength)
 	}
 
 	loginRegexp := regexp.MustCompile(`^[` + config.Username.AllowedCharacters + `]+$`)
@@ -72,7 +70,7 @@ func isValidLogin(login string, config config.Config) (bool, error) {
 
 func isValidPassword(password string, config config.Config) (bool, error) {
 	if utf8.RuneCountInString(password) < config.Password.MinLength || utf8.RuneCountInString(password) > config.Password.MaxLength {
-		return false, errors.New(fmt.Sprintf("invalid password length. Must be between %d and %d characters", config.Password.MinLength, config.Password.MaxLength))
+		return false, fmt.Errorf("invalid password length. Must be between %d and %d characters", config.Password.MinLength, config.Password.MaxLength)
 	}
 	if !utf8.ValidString(password) {
 		return false, errors.New("invalid password characters. Must contain only valid UTF-8 characters")
@@ -132,14 +130,10 @@ func (s *UserService) RefreshAccessToken(req RefreshJwtRequest, config *config.C
 	if err != nil {
 		return JwtResponse{}, errors.New("invalid refresh token")
 	}
-	flag, userinfo := s.repo.FindByUUID(id.String())
-	if !flag {
+	user, err := s.repo.FindByUUID(id.String())
+	if err != nil {
 		return JwtResponse{}, errors.New("user not found")
 	}
-	var user User
-	user.UUID = id
-	user.Login = userinfo[0]
-	user.Password = userinfo[1]
 	accessToken, err := jwt.GenerateAccessToken(user, config)
 	if err != nil {
 		return JwtResponse{}, errors.New("failed to generate access token")
@@ -159,14 +153,10 @@ func (s *UserService) RefreshRefreshToken(req RefreshJwtRequest, oldAccessToken 
 	if err != nil {
 		return JwtResponse{}, errors.New("invalid refresh token")
 	}
-	flag, userinfo := s.repo.FindByUUID(id.String())
-	if !flag {
+	user, err := s.repo.FindByUUID(id.String())
+	if err != nil {
 		return JwtResponse{}, errors.New("user not found")
 	}
-	var user User
-	user.UUID = id
-	user.Login = userinfo[0]
-	user.Password = userinfo[1]
 	refreshToken, err := jwt.GenerateRefreshToken(user, config)
 	if err != nil {
 		return JwtResponse{}, errors.New("failed to generate access token")

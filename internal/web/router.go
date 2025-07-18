@@ -8,7 +8,7 @@ func RegisterRoutes(r chi.Router, userHandler *UserHandler, marketHandler *Marke
 	r.Post("/login", userHandler.Login)
 	r.Post("/register", userHandler.Register)
 
-
+	// Сюда надо добавить middleware для проверки авторизации
 	r.Post("/new-ad", marketHandler.NewAd)
 	r.Get("/ads-list", marketHandler.AdsList)
 }
