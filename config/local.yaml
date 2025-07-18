@@ -5,3 +5,14 @@ JWT_ACCESS_SECRET: "1234567890abcdef1234567890abcdef"
 JWT_REFRESH_SECRET: "1234567890abcdef1234567890abcdef"
 JWT_EXP_ACCESS_TOKEN: 15 # minutes
 JWT_EXP_REFRESH_TOKEN: 24 # hours
+username:
+    min_length: 3
+    max_length: 20
+    allowed_charset: "A-Za-z0-9_-"
+    case_insensitive: true
+password:
+    min_length: 8
+    max_length: 64
+    require_upper: true
+    require_lower: true
+    require_digit: true

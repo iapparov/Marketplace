@@ -7,6 +7,8 @@ import (
 func RegisterRoutes(r chi.Router, userHandler *UserHandler, marketHandler *MarketHandler) {
 	r.Post("/login", userHandler.Login)
 	r.Post("/register", userHandler.Register)
+
+
 	r.Post("/new-ad", marketHandler.NewAd)
-	r.Get("/adslist", marketHandler.AdsList)
+	r.Get("/ads-list", marketHandler.AdsList)
 }

@@ -2,8 +2,11 @@ package app
 
 import (
 	"errors"
+	"fmt"
 	"marketplace/internal/config"
+	"strings"
 	"unicode/utf8"
+	"regexp"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -18,7 +21,7 @@ func NewUserService(repo UserRepository) *UserService{
 	}
 }
 
-func (s *UserService) RegisterUser(req SignUpRequest) (User, error) {
+func (s *UserService) RegisterUser(req SignUpRequest, config config.Config) (User, error) {
 
 	_, err := s.repo.FindByLogin(req.Login)
 	if err == nil {
@@ -29,17 +32,21 @@ func (s *UserService) RegisterUser(req SignUpRequest) (User, error) {
 		return User{}, errors.New("login and password cannot be empty")
 	}
 
-	_ , err = isValidLogin(req.Login)
+	_ , err = isValidLogin(req.Login, config)
 	if err != nil {
 		return User{}, err
 	}
-	_ , err = isValidPassword(req.Password)
+	_ , err = isValidPassword(req.Password, config)
 	if err != nil {
 		return User{}, err
 	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return User{}, err
+	}
+
+	if config.Username.CaseSensitive {
+		req.Login = strings.ToLower(req.Login)
 	}
 
 	user := User{
@@ -51,36 +58,30 @@ func (s *UserService) RegisterUser(req SignUpRequest) (User, error) {
 	return user, nil
 }
 
-func isValidLogin(login string) (bool, error) {
-	if utf8.RuneCountInString(login) < 3 || utf8.RuneCountInString(login) > 20 {
-		return false, errors.New("invalid login length . Must be between 3 and 20 characters")
+func isValidLogin(login string, config config.Config) (bool, error) {
+	if utf8.RuneCountInString(login) < config.Username.MinLength || utf8.RuneCountInString(login) > config.Username.MaxLength {
+		return false, errors.New(fmt.Sprintf("invalid login length . Must be between %d and %d characters", config.Username.MinLength, config.Username.MaxLength))
 	}
-	for _, r := range login {
-		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' || r != ' ') {
-			return false, errors.New("invalid login characters. Must contain only letters, digits, underscores, or hyphens and must not contain spaces")
-		}
+
+	loginRegexp := regexp.MustCompile(`^[` + config.Username.AllowedCharacters + `]+$`)
+	if !loginRegexp.MatchString(login) {
+		return false, errors.New("invalid login characters. Must contain only letters, digits, underscores, or hyphens and must not contain spaces")
 	}
 	return true, nil
 }
 
-func isValidPassword(password string) (bool, error) {
-	if utf8.RuneCountInString(password) < 6 || utf8.RuneCountInString(password) > 20 {
-		return false, errors.New("invalid password length. Must be between 6 and 20 characters")
+func isValidPassword(password string, config config.Config) (bool, error) {
+	if utf8.RuneCountInString(password) < config.Password.MinLength || utf8.RuneCountInString(password) > config.Password.MaxLength {
+		return false, errors.New(fmt.Sprintf("invalid password length. Must be between %d and %d characters", config.Password.MinLength, config.Password.MaxLength))
 	}
 	if !utf8.ValidString(password) {
 		return false, errors.New("invalid password characters. Must contain only valid UTF-8 characters")
 	}
-	hasUpper := false
-	hasLower := false
-	hasDigit := false
+	hasUpper := !config.Password.RequireUpper
+	hasLower := !config.Password.RequireLower
+	hasDigit := !config.Password.RequireDigit
 	hasSpace := false
 	for _, r := range password {
-		if utf8.RuneCountInString(password) < 6 || utf8.RuneCountInString(password) > 20 {
-			return false, errors.New("invalid password length. Must be between 6 and 20 characters")
-		}
-		if !utf8.ValidString(password) {
-			return false, errors.New("invalid password characters. Must contain only valid UTF-8 characters")
-		}
 		if r >= 'A' && r <= 'Z' {
 			hasUpper = true
 		} else if r >= 'a' && r <= 'z' {
