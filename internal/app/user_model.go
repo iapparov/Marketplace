@@ -15,15 +15,12 @@ type SignUpRequest struct {
 	Password string `json:"password"`
 }
 
-type UserService struct {
-	repo UserRepository
+type SignUpResponse struct {
+	UUID     uuid.UUID	`json:"uuid"`
+	Login    string		`json:"login"`
 }
 
 
-
-// type UserService interface {
-// 	RegisterUser(req SignUpRequest) (User, error)
-// 	LoginJwt(req JwtRequest, jwt JwtProvider) (JwtResponse, error)
-// 	RefreshAccessToken(req RefreshJwtRequest) (JwtResponse, error)
-// 	RefreshRefreshToken(req RefreshJwtRequest, oldAccessToken string) (JwtResponse, error)
-// }
+type UserService struct {
+	repo UserRepository
+}

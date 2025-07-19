@@ -19,7 +19,7 @@ func NewUserService(repo UserRepository) *UserService{
 	}
 }
 
-func (s *UserService) RegisterUser(req SignUpRequest, config config.Config) (User, error) {
+func (s *UserService) RegisterUser(req SignUpRequest, config *config.Config) (User, error) {
 
 	_, err := s.repo.FindByLogin(req.Login)
 	if err == nil {
@@ -52,23 +52,28 @@ func (s *UserService) RegisterUser(req SignUpRequest, config config.Config) (Use
 		Login:    req.Login,
 		Password: string(hashedPassword),
 	}
+	err = s.repo.SaveNewUser(user)
+	if err != nil {
+		return User{}, fmt.Errorf("failed to save user: %w", err)
+	}	
 
 	return user, nil
 }
 
-func isValidLogin(login string, config config.Config) (bool, error) {
+func isValidLogin(login string, config *config.Config) (bool, error) {
 	if utf8.RuneCountInString(login) < config.Username.MinLength || utf8.RuneCountInString(login) > config.Username.MaxLength {
 		return false, fmt.Errorf("invalid login length . Must be between %d and %d characters", config.Username.MinLength, config.Username.MaxLength)
 	}
 
-	loginRegexp := regexp.MustCompile(`^[` + config.Username.AllowedCharacters + `]+$`)
+	escapedChars := regexp.QuoteMeta(config.Username.AllowedCharacters)
+	loginRegexp := regexp.MustCompile(`^[` + escapedChars + `]+$`)
 	if !loginRegexp.MatchString(login) {
 		return false, errors.New("invalid login characters. Must contain only letters, digits, underscores, or hyphens and must not contain spaces")
 	}
 	return true, nil
 }
 
-func isValidPassword(password string, config config.Config) (bool, error) {
+func isValidPassword(password string, config *config.Config) (bool, error) {
 	if utf8.RuneCountInString(password) < config.Password.MinLength || utf8.RuneCountInString(password) > config.Password.MaxLength {
 		return false, fmt.Errorf("invalid password length. Must be between %d and %d characters", config.Password.MinLength, config.Password.MaxLength)
 	}
@@ -97,7 +102,7 @@ func isValidPassword(password string, config config.Config) (bool, error) {
 	return hasUpper && hasLower && hasDigit, nil
 }
 
-func (s *UserService) LoginJwt(req JwtRequest, jwt JwtProvider, config *config.Config) (JwtResponse, error) {
+func (s *UserService) LoginJwt(req JwtRequest, jwt *JwtProvider, config *config.Config) (JwtResponse, error) {
 	user, err := s.repo.FindByLogin(req.Login)
 	if err != nil {
 		return JwtResponse{}, errors.New("user not found")
@@ -124,38 +129,18 @@ func (s *UserService) LoginJwt(req JwtRequest, jwt JwtProvider, config *config.C
 	}, nil
 }
 
-func (s *UserService) RefreshAccessToken(req RefreshJwtRequest, config *config.Config) (JwtResponse, error){
-	var jwt JwtProvider
-	id, err := jwt.ValidateRefreshToken(req.RefreshToken)
+func (s *UserService) RefreshAccessToken(req RefreshJwtRequest, jwt *JwtProvider, config *config.Config) (JwtResponse, error){
+	claims, err := jwt.ValidateRefreshToken(req.RefreshToken)
 	if err != nil {
 		return JwtResponse{}, errors.New("invalid refresh token")
 	}
-	user, err := s.repo.FindByUUID(id.String())
+	user, err := s.repo.FindByUUID(claims["uuid"].(string))
 	if err != nil {
 		return JwtResponse{}, errors.New("user not found")
 	}
 	accessToken, err := jwt.GenerateAccessToken(user, config)
 	if err != nil {
 		return JwtResponse{}, errors.New("failed to generate access token")
-	}
-
-	return JwtResponse{
-		Type:        "Bearer",
-		AccessToken: accessToken,
-		RefreshToken: req.RefreshToken,
-
-	}, nil
-
-}
-func (s *UserService) RefreshRefreshToken(req RefreshJwtRequest, oldAccessToken string, config *config.Config) (JwtResponse, error){
-	var jwt JwtProvider
-	id, err := jwt.ValidateRefreshToken(req.RefreshToken)
-	if err != nil {
-		return JwtResponse{}, errors.New("invalid refresh token")
-	}
-	user, err := s.repo.FindByUUID(id.String())
-	if err != nil {
-		return JwtResponse{}, errors.New("user not found")
 	}
 	refreshToken, err := jwt.GenerateRefreshToken(user, config)
 	if err != nil {
@@ -164,7 +149,7 @@ func (s *UserService) RefreshRefreshToken(req RefreshJwtRequest, oldAccessToken 
 
 	return JwtResponse{
 		Type:        "Bearer",
-		AccessToken: oldAccessToken,
+		AccessToken: accessToken,
 		RefreshToken: refreshToken,
 
 	}, nil

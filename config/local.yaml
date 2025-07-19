@@ -8,7 +8,7 @@ JWT_EXP_REFRESH_TOKEN: 24 # hours
 username:
     min_length: 3
     max_length: 20
-    allowed_charset: "A-Za-z0-9_-"
+    allowed_characters: "A-Za-z0-9_-"
     case_insensitive: true
 password:
     min_length: 8

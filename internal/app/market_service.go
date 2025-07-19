@@ -46,19 +46,19 @@ func (s *MarketService) NewAd(ad Ad, config config.Config, userid uuid.UUID) (Ad
 		return Ad{}, fmt.Errorf("FindByUUID error: %w", err)
 	}
 	ad.Username = user.Login
+	ad.UUID = uuid.New()
 	return s.Marketrepo.SaveAd(ad)
 }
 
-func (s *MarketService) AddList(params AdsListParams, id uuid.UUID) ([]Ad, error) {
+func (s *MarketService) AdsList(params AdsListParams, id uuid.UUID) ([]Ad, error) {
 
-
-	Addlist, err := s.Marketrepo.GetAdsList(params, id)
+	Adslist, err := s.Marketrepo.GetAdsList(params, id.String())
 	if err != nil {
 		return nil, fmt.Errorf("getadslist error: %w", err)
 	}
-	if len(Addlist) == 0 {
+	if len(Adslist) == 0 {
 		return nil, errors.New("list is empty")
 	}
 
-	return Addlist, nil
+	return Adslist, nil
 }

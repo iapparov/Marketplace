@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 )
 
 
@@ -35,39 +34,41 @@ func (j *JwtProvider) GenerateRefreshToken(user User, config *config.Config) (st
 	return token.SignedString(j.refreshSecret)
 }
 
-func (j *JwtProvider) ValidateAccessToken(tokenStr string) (uuid.UUID, error) {
-    
+func (j *JwtProvider) ValidateAccessToken(tokenStr string) (jwt.MapClaims, error) {
+
     token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
         return j.accessSecret, nil
     })
     if err != nil || !token.Valid {
-        return uuid.Nil, errors.New("invalid access token")
+        return nil, errors.New("invalid access token")
     }
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        return uuid.Nil, errors.New("invalid claims")
+        return nil, errors.New("invalid claims")
     }
-    id, err := uuid.Parse(claims["uuid"].(string))
-    if err != nil {
-        return uuid.Nil, err
+    
+    exp, ok := claims["exp"].(float64)
+    if !ok || time.Unix(int64(exp), 0).Before(time.Now()) {
+        return nil, errors.New("token has expired")
     }
-    return id, nil
+    return claims, nil
 }
 
-func (j *JwtProvider) ValidateRefreshToken(tokenStr string) (uuid.UUID, error) {
+func (j *JwtProvider) ValidateRefreshToken(tokenStr string) (jwt.MapClaims, error) {
     token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
         return j.refreshSecret, nil
     })
     if err != nil || !token.Valid {
-        return uuid.Nil, errors.New("invalid access token")
+        return nil, errors.New("invalid access token")
     }
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {
-        return uuid.Nil, errors.New("invalid claims")
+        return nil, errors.New("invalid claims")
     }
-    id, err := uuid.Parse(claims["uuid"].(string))
-    if err != nil {
-        return uuid.Nil, err
+    
+    exp, ok := claims["exp"].(float64)
+    if !ok || time.Unix(int64(exp), 0).Before(time.Now()) {
+        return nil, errors.New("token has expired")
     }
-    return id, nil
+    return claims, nil
 }

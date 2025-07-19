@@ -6,7 +6,8 @@ import (
 )
 
 type Ad struct {
-	ID          int       `json:"id"`
+	ID          int64 	  `json:"id"`
+	UUID        uuid.UUID `json:"uuid"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	ImageURL    string    `json:"image_url"`

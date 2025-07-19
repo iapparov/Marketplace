@@ -1,10 +1,13 @@
 package web
 
 import (
-	"net/http"
-	"marketplace/internal/app"
 	"encoding/json"
+	"fmt"
+	"marketplace/internal/app"
+	"marketplace/internal/config"
+	"net/http"
 	"strconv"
+
 	"github.com/google/uuid"
 )
 
@@ -14,16 +17,45 @@ type AdsListResponse struct {
 }
 
 type MarketHandler struct {
-	app *app.MarketService
+	app app.MarketServicer
+	config *config.Config
 }
 
-func NewMarketHandler(app *app.MarketService) *MarketHandler {
+func NewMarketHandler(app app.MarketServicer, config *config.Config) *MarketHandler {
 	return &MarketHandler{
 		app: app,
+		config: config,
 	}
 }
 
 func (h *MarketHandler) NewAd(w http.ResponseWriter, r *http.Request) {
+	var ad app.Ad
+	if err := json.NewDecoder(r.Body).Decode(&ad); err != nil {
+		http.Error(w, "bad request in body", http.StatusBadRequest)
+		return
+	}
+	userIDVal := r.Context().Value(UserIDKey)
+	fmt.Println(userIDVal) // Debugging line, can be removed later
+	useruuid, val_err := userIDVal.(string)
+	if !val_err {
+		http.Error(w, "invalid user_id in context", http.StatusBadRequest)
+		return
+	}
+	uuid, err := uuid.Parse(useruuid)
+	if err != nil {
+		http.Error(w, "invalid user_id format", http.StatusBadRequest)
+		return
+	}
+	
+	Adresp, err := h.app.NewAd(ad, *h.config, uuid)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	
+	w.Header().Set("Content-Type", "Application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(Adresp)
 	
 }
 
@@ -59,21 +91,19 @@ func (h *MarketHandler) AdsList(w http.ResponseWriter, r *http.Request) {
 		params.MaxPrice = 1000000
 	}
 
-
-	// Примерный проброс для контекста с user_id, доделать
-	userIDVal := r.Context().Value("user_id")
-	useruuid, ok := userIDVal.(string)
-	if !ok {
-		http.Error(w, "invalid user_id in context", http.StatusBadRequest)
-		return
-	}
-	id, err := uuid.Parse(useruuid)
-	if err != nil {
-		http.Error(w, "invalid user_id format", http.StatusBadRequest)
-		return
+	userIDVal := r.Context().Value(UserIDKey)
+	useruuid, val_err := userIDVal.(string)
+	var id uuid.UUID
+	if val_err {
+		id, err = uuid.Parse(useruuid)
+		if err != nil {
+			id = uuid.Nil
+		}
+	} else {
+		id = uuid.Nil
 	}
 
-	AddList, err := h.app.AddList(params, id)
+	AddList, err := h.app.AdsList(params, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
