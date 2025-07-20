@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"context"
@@ -17,14 +16,14 @@ import (
 
 type MockMarketService struct {
 	NewAdFunc   func(ad app.Ad, cfg config.Config, userID uuid.UUID) (app.Ad, error)
-	AdsListFunc func(params app.AdsListParams, userID uuid.UUID) ([]app.Ad, error)
+	AdsListFunc func(params app.AdsListParams, userID uuid.UUID) ([]app.AdsListResponse, error)
 }
 
 func (m *MockMarketService) NewAd(ad app.Ad, cfg config.Config, userID uuid.UUID) (app.Ad, error) {
 	return m.NewAdFunc(ad, cfg, userID)
 }
 
-func (m *MockMarketService) AdsList(params app.AdsListParams, userID uuid.UUID) ([]app.Ad, error) {
+func (m *MockMarketService) AdsList(params app.AdsListParams, userID uuid.UUID) ([]app.AdsListResponse, error) {
 	return m.AdsListFunc(params, userID)
 }
 
@@ -98,9 +97,9 @@ func TestMarketHandler_NewAd_InvalidUUID(t *testing.T) {
 
 func TestMarketHandler_AdsList_Success(t *testing.T) {
 	mockService := &MockMarketService{
-		AdsListFunc: func(params app.AdsListParams, userID uuid.UUID) ([]app.Ad, error) {
-			return []app.Ad{
-				{Title: "Ad1", UUID: uuid.New(), CreatedAt: time.Now()},
+		AdsListFunc: func(params app.AdsListParams, userID uuid.UUID) ([]app.AdsListResponse, error) {
+			return []app.AdsListResponse{
+				{Title: "Ad1",},
 			}, nil
 		},
 	}
@@ -127,7 +126,7 @@ func TestMarketHandler_AdsList_Success(t *testing.T) {
 
 func TestMarketHandler_AdsList_ServiceError(t *testing.T) {
 	mockService := &MockMarketService{
-		AdsListFunc: func(params app.AdsListParams, userID uuid.UUID) ([]app.Ad, error) {
+		AdsListFunc: func(params app.AdsListParams, userID uuid.UUID) ([]app.AdsListResponse, error) {
 			return nil, errors.New("failed to fetch")
 		},
 	}

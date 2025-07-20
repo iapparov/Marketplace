@@ -50,7 +50,7 @@ func (s *MarketService) NewAd(ad Ad, config config.Config, userid uuid.UUID) (Ad
 	return s.Marketrepo.SaveAd(ad)
 }
 
-func (s *MarketService) AdsList(params AdsListParams, id uuid.UUID) ([]Ad, error) {
+func (s *MarketService) AdsList(params AdsListParams, id uuid.UUID) ([]AdsListResponse, error) {
 
 	Adslist, err := s.Marketrepo.GetAdsList(params, id.String())
 	if err != nil {

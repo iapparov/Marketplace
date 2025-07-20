@@ -1,4 +1,4 @@
-env: local # or prod
+env: prod # or prod
 http_port: 8080
 db: "./storage/marketplace.db"
 JWT_ACCESS_SECRET: "1234567890abcdef1234567890abcdef"

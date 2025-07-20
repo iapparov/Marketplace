@@ -9,10 +9,11 @@ import (
 
 type MarketRepo struct{
 	db *sql.DB
+	user app.UserRepository
 }
 
-func NewMarketRepo(db *sql.DB) *MarketRepo {
-	return &MarketRepo{db: db}
+func NewMarketRepo(db *sql.DB, user app.UserRepository) *MarketRepo {
+	return &MarketRepo{db: db, user: user}
 }
 
 func (s *MarketRepo) SaveAd(ad app.Ad) (app.Ad, error){
@@ -31,8 +32,8 @@ func (s *MarketRepo) SaveAd(ad app.Ad) (app.Ad, error){
 	return ad, nil
 }
 
-func (s *MarketRepo) GetAdsList(params app.AdsListParams, user_id string) ([]app.Ad, error) {
-	var ads []app.Ad
+func (s *MarketRepo) GetAdsList(params app.AdsListParams, user_id string) ([]app.AdsListResponse, error) {
+	var ads []app.AdsListResponse
 
 	query := `
 		SELECT 
@@ -69,26 +70,33 @@ func (s *MarketRepo) GetAdsList(params app.AdsListParams, user_id string) ([]app
 	defer rows.Close()
 
 	for rows.Next() {
+		var adResp app.AdsListResponse
 		var ad app.Ad
 		err := rows.Scan(
 			&ad.ID,
 			&ad.UUID,
-			&ad.Title,
-			&ad.Description,
-			&ad.ImageURL,
+			&adResp.Title,
+			&adResp.Description,
+			&adResp.ImageURL,
 			&ad.UserID,
-			&ad.Price,
+			&adResp.Price,
 			&ad.CreatedAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan error DB: %w", err)
 		}
 		if ad.UserID.String() == user_id {
-			ad.Owner = true
-			
+			adResp.Owner = true
+		}
+		user, err := s.user.FindByUUID(ad.UserID.String())
+
+		if err != nil {
+			return nil, fmt.Errorf("err gettin username from DB: %w", err)
 		}
 
-		ads = append(ads, ad)
+		adResp.Username = user.Login
+
+		ads = append(ads, adResp)
 	}
 
 	return ads, nil

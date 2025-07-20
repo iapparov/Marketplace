@@ -18,6 +18,15 @@ type Ad struct {
 	Owner      	bool      `json:"owner,omitempty"` 
 }
 
+type AdsListResponse struct {
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	ImageURL    string    `json:"image_url"`
+	Username    string    `json:"username"`
+	Price       float64   `json:"price"`
+	Owner      	bool      `json:"owner,omitempty"`
+}
+
 type MarketService struct {
 	Marketrepo MarketRepository
 	Userrepo   UserRepository

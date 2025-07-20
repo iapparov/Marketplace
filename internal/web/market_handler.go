@@ -83,7 +83,7 @@ func (h *MarketHandler) AdsList(w http.ResponseWriter, r *http.Request) {
 	}
 	params.Order = rq.Get("order")
 	if params.Order != "asc" && params.Order != "desc" {
-		params.Order = "asc"
+		params.Order = "desc"
 	}
 	params.MinPrice, err = strconv.Atoi(rq.Get("min_price"))
 
