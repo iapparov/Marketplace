@@ -1,9 +1,9 @@
 package datasource
 
 import (
-	"marketplace/internal/app"
-	"fmt"
 	"database/sql"
+	"fmt"
+	"marketplace/internal/app"
 )
 
 

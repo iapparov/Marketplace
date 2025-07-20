@@ -6,8 +6,8 @@ import (
 	"marketplace/internal/datasource"
 	"marketplace/internal/di"
 	"marketplace/internal/web"
-
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 
@@ -18,6 +18,7 @@ func main() {
 		
 		fx.Provide(
 			config.MustLoad,
+			provideLogger,
 			app.NewJwtProvider,
 			app.NewMarketService,
 			app.NewUserService,
@@ -45,4 +46,16 @@ func main() {
 	)
 
 	app.Run()
+}
+
+func provideLogger(cfg *config.Config) (*zap.Logger, error) {
+	switch cfg.Env {
+	case "prod":
+		zapCfg := zap.NewProductionConfig()
+		return zapCfg.Build()
+	default:
+		zapCfg := zap.NewDevelopmentConfig()
+		zapCfg.Encoding = "console"
+		return zapCfg.Build()
+	}
 }

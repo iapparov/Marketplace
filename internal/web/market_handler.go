@@ -7,7 +7,7 @@ import (
 	"marketplace/internal/config"
 	"net/http"
 	"strconv"
-
+	"go.uber.org/zap"
 	"github.com/google/uuid"
 )
 
@@ -19,18 +19,21 @@ type AdsListResponse struct {
 type MarketHandler struct {
 	app app.MarketServicer
 	config *config.Config
+	logger *zap.Logger
 }
 
-func NewMarketHandler(app app.MarketServicer, config *config.Config) *MarketHandler {
+func NewMarketHandler(app app.MarketServicer, config *config.Config, logger *zap.Logger) *MarketHandler {
 	return &MarketHandler{
 		app: app,
 		config: config,
+		logger: logger,
 	}
 }
 
 func (h *MarketHandler) NewAd(w http.ResponseWriter, r *http.Request) {
 	var ad app.Ad
 	if err := json.NewDecoder(r.Body).Decode(&ad); err != nil {
+		h.logger.Warn("invalid ad request body", zap.Error(err))
 		http.Error(w, "bad request in body", http.StatusBadRequest)
 		return
 	}
@@ -38,11 +41,13 @@ func (h *MarketHandler) NewAd(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(userIDVal) // Debugging line, can be removed later
 	useruuid, val_err := userIDVal.(string)
 	if !val_err {
+		h.logger.Warn("invalid user_id in context")
 		http.Error(w, "invalid user_id in context", http.StatusBadRequest)
 		return
 	}
 	uuid, err := uuid.Parse(useruuid)
 	if err != nil {
+		h.logger.Warn("invalid user_id format", zap.Error(err))
 		http.Error(w, "invalid user_id format", http.StatusBadRequest)
 		return
 	}
@@ -50,9 +55,11 @@ func (h *MarketHandler) NewAd(w http.ResponseWriter, r *http.Request) {
 	Adresp, err := h.app.NewAd(ad, *h.config, uuid)
 
 	if err != nil {
+		h.logger.Warn("failed to create new ad", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	
+	h.logger.Info("new ad created successfully", zap.String("ad_id", Adresp.UUID.String()))
 	w.Header().Set("Content-Type", "Application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(Adresp)
@@ -103,12 +110,14 @@ func (h *MarketHandler) AdsList(w http.ResponseWriter, r *http.Request) {
 		id = uuid.Nil
 	}
 
-	AddList, err := h.app.AdsList(params, id)
+	AdsList, err := h.app.AdsList(params, id)
 	if err != nil {
+		h.logger.Warn("failed to get ads list", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	h.logger.Info("ads list retrieved successfully", zap.Int("total", len(AdsList)))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(AddList)
+	json.NewEncoder(w).Encode(AdsList)
 }
