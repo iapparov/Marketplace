@@ -211,3 +211,15 @@ go test ./...
 - **fx** (DI фреймворк)
 - **bcrypt** (хэширование паролей)
 - **uuid** (генерация UUID)
+
+## Docker
+
+1. **Соберите образ:**
+```sh
+docker build -t marketplace-app .
+```
+
+2. **Запуск**
+```sh
+docker run -p 8080:8080 marketplace-app
+```
