@@ -2,7 +2,6 @@ package web
 
 import (
 	"encoding/json"
-	"fmt"
 	"marketplace/internal/app"
 	"marketplace/internal/config"
 	"net/http"
@@ -38,7 +37,6 @@ func (h *MarketHandler) NewAd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userIDVal := r.Context().Value(UserIDKey)
-	fmt.Println(userIDVal) // Debugging line, can be removed later
 	useruuid, val_err := userIDVal.(string)
 	if !val_err {
 		h.logger.Warn("invalid user_id in context")

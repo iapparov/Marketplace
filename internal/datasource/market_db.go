@@ -23,7 +23,7 @@ func (s *MarketRepo) SaveAd(ad app.Ad) (app.Ad, error){
 	}
 	defer stmt.Close()
 
-	_, err = stmt.Exec(ad.ID, ad.Title, ad.Description, ad.Price, ad.ImageURL, ad.UserID, ad.CreatedAt)
+	_, err = stmt.Exec(ad.UUID.String(), ad.Title, ad.Description, ad.Price, ad.ImageURL, ad.UserID, ad.CreatedAt)
 	if err != nil {
 		return app.Ad{}, fmt.Errorf("exec error DB:%w", err)
 	}

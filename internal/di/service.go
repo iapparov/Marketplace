@@ -13,7 +13,6 @@ import (
 
 
 func StartHTTPServer(lc fx.Lifecycle, user_handler *web.UserHandler, market_handler *web.MarketHandler, config *config.Config, logger *zap.Logger) {
-	// Регистрируем маршруты
 	router := chi.NewRouter()
 	web.RegisterRoutes(router, user_handler, market_handler)
 

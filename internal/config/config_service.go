@@ -8,20 +8,15 @@ import (
 )
 
 
-func MustLoad() *Config{
-	configPath := os.Getenv("CONFIG_PATH")
-	if configPath == ""{
-		log.Fatalf("CONFIG_PATH env is required")
-	}
-	data, err := os.ReadFile(configPath)
+func LoadConfig(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("%s", "failed to read config file:" + err.Error())
+		return nil, err
 	}
 
 	var cfg Config
-
-	if err := yaml.Unmarshal(data, &cfg); err != nil{
-		log.Fatalf("%s", "failed to unmarshal config: " + err.Error())
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return nil, err
 	}
 
 	cfg.Ad.AllowedImgTypesMap = make(map[string]bool)
@@ -32,6 +27,17 @@ func MustLoad() *Config{
 		cfg.Ad.AllowedImgTypesMap[strings.ToLower(ext)] = true
 	}
 
+	return &cfg, nil
+}
 
-	return &cfg
+func MustLoad() *Config {
+	path := os.Getenv("CONFIG_PATH")
+	if path == "" {
+		log.Fatal("CONFIG_PATH env is required")
+	}
+	cfg, err := LoadConfig(path)
+	if err != nil {
+		log.Fatalf("failed to load config: %v", err)
+	}
+	return cfg
 }

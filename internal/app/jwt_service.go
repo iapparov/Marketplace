@@ -59,7 +59,7 @@ func (j *JwtProvider) ValidateRefreshToken(tokenStr string) (jwt.MapClaims, erro
         return j.refreshSecret, nil
     })
     if err != nil || !token.Valid {
-        return nil, errors.New("invalid access token")
+        return nil, errors.New("invalid refresh token")
     }
     claims, ok := token.Claims.(jwt.MapClaims)
     if !ok {

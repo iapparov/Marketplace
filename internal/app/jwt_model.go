@@ -4,6 +4,7 @@ type JwtRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+
 type JwtResponse struct {
 	Type string `json:"type"`
 	AccessToken string `json:"access_token"`
