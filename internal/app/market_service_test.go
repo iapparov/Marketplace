@@ -194,7 +194,7 @@ func TestAdsList_Success(t *testing.T) {
     if err != nil && err.Error() != "list is empty" {
         t.Fatalf("unexpected error: %v", err)
     }
-    if len(ads) != len(marketRepo.Ads) {
+    if len(ads) != len(marketRepo.AdsResponse) {
         t.Errorf("expected %d ads, got %d", len(marketRepo.Ads), len(ads))
     }
 }

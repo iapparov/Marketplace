@@ -7,11 +7,48 @@ import (
 	"time"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/google/uuid"
+	"database/sql"
 )
+func setupMarketTestDB(t *testing.T) *sql.DB {
+	dsn := "file:testdb?mode=memory&cache=shared"
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		t.Fatalf("failed to open test DB: %v", err)
+	}
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		uuid TEXT NOT NULL UNIQUE,
+		login TEXT NOT NULL,
+		password TEXT NOT NULL
+	);`)
+	if err != nil {
+		t.Fatalf("failed to create users table: %v", err)
+	}
+
+	_, err = db.Exec(`
+	CREATE TABLE IF NOT EXISTS ads (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		uuid TEXT NOT NULL UNIQUE,
+		title TEXT NOT NULL,
+		description TEXT NOT NULL,
+		img TEXT,
+		user_uuid TEXT NOT NULL,
+		price REAL NOT NULL,
+		created_at DATETIME NOT NULL,
+		FOREIGN KEY(user_uuid) REFERENCES users(uuid)
+	);`)
+	if err != nil {
+		t.Fatalf("failed to create ads table: %v", err)
+	}
+
+	return db
+}
 
 
 func TestMarketRepo_SaveAndGetAds(t *testing.T) {
-	db := setupTestDB(t)
+	db := setupMarketTestDB(t)
 	userRepo := datasource.NewUserRepo(db)
 	adRepo := datasource.NewMarketRepo(db, userRepo)
 

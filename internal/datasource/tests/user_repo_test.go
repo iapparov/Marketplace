@@ -6,7 +6,6 @@ import (
 	"marketplace/internal/config"
 	"marketplace/internal/datasource"
 	"testing"
-
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/google/uuid"
 )
