@@ -13,7 +13,7 @@ ENV CGO_ENABLED=1
 
 RUN go build -o server ./cmd/main.go
 
-FROM debian:bullseye-slim
+FROM debian:bookworm-slim
 
 WORKDIR /root
 
@@ -22,6 +22,10 @@ RUN apt-get update && apt-get install -y ca-certificates sqlite3 && rm -rf /var/
 COPY --from=builder /app/server .
 
 COPY config/local.yaml ./config.yaml
+
+RUN mkdir -p /root/storage
+
+ENV CONFIG_PATH=./config.yaml
 
 EXPOSE 8080
 
